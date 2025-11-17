@@ -1,79 +1,157 @@
-# Disaster Recovery API for Apache Airflow 2.11.0
+# Multi-Client Disaster Recovery API for Apache Airflow 2.11.0
 
-This project provides a comprehensive disaster recovery API system for Apache Airflow, allowing you to manage DAGs, handle failures, and perform recovery operations.
+This project provides a comprehensive multi-client disaster recovery API system for Apache Airflow, allowing you to manage multiple Airflow instances, handle failures, and perform recovery operations across different environments.
 
 ## Features
 
-- ✅ Pause/Resume DAGs
-- ✅ Trigger DAG runs (Rerun)
+- ✅ **Multi-Client Support** - Manage multiple Airflow instances from a single API
+- ✅ Pause/Resume DAGs across multiple clients
+- ✅ Trigger DAG runs (Run immediately or Rerun with specific date)
 - ✅ Clear and rerun failed tasks
-- ✅ Get DAG and task status
+- ✅ Get DAG and task status from multiple environments
 - ✅ View task logs
 - ✅ Bulk operations (pause/unpause all DAGs)
-- ✅ Disaster recovery dashboard
-- ✅ Two sample DAGs with 4 tasks each, scheduled hourly
+- ✅ Disaster recovery dashboard with multi-client aggregation
+- ✅ Parallel API calls to multiple Airflow instances
+- ✅ Per-client error handling (one failure doesn't affect others)
+- ✅ Query parameter-based client selection
+
+## Architecture
+
+This setup includes:
+- **Client1 (Production)**: Airflow on port 8080 with 2 DAGs (4 tasks each)
+- **Client3 (Development)**: Airflow on port 8082 with 2 DAGs (4 tasks each)
+- **Multi-Client API**: Node.js/Express server on port 3001
 
 ## Prerequisites
 
 - Docker and Docker Compose
 - Node.js 20+ (for local development)
+- Bash (for automated setup scripts)
 
 ## Quick Start
 
-### 1. Install Dependencies
+### One-Command Setup
 
 ```bash
+# Install dependencies first (one time only)
 npm install
+
+# Start everything with a single command
+./start.sh
 ```
 
-### 2. Start Airflow and Disaster Recovery API
+This automated script will:
+1. Create all necessary directories
+2. Set proper permissions
+3. Start Client1 (Production Airflow on port 8080)
+4. Start Client3 (Development Airflow on port 8082)
+5. Start the Multi-Client API server on port 3001
+6. Wait for all services to be healthy
+7. Display access URLs and usage examples
+
+### Stop All Services
 
 ```bash
-docker-compose up -d
+./stop.sh
 ```
 
-This will start:
+### Manual Setup (Alternative)
 
-- PostgreSQL database
-- Airflow Webserver (port 8080)
-- Airflow Scheduler
-- Disaster Recovery API (port 3000)
+If you prefer manual control:
 
-### 3. Access Services
+```bash
+# Install dependencies
+npm install
 
-- **Airflow Web UI**: http://localhost:8080
+# Start Client1 (Production)
+docker compose -f docker-compose.yaml up -d
+
+# Start Client3 (Development)
+docker compose -f docker-compose-client3.yaml up -d
+
+# Start Multi-Client API
+PORT=3001 node src/index.js
+```
+
+### Access Services
+
+- **Client1 (Production) Web UI**: http://localhost:8080
   - Username: `airflow`
   - Password: `airflow`
-- **Disaster Recovery API**: http://localhost:3000
-  - Health Check: http://localhost:3000/health
+- **Client3 (Development) Web UI**: http://localhost:8082
+  - Username: `airflow`
+  - Password: `airflow`
+- **Multi-Client Disaster Recovery API**: http://localhost:3001
+  - Health Check: http://localhost:3001/health
+  - List Clients: http://localhost:3001/api/clients
 
-### 4. Wait for Initialization
+### First Time Setup
 
-The first time you start, wait 2-3 minutes for Airflow to initialize the database and create the admin user.
+The first time you start, wait 2-3 minutes for Airflow instances to initialize the database and create the admin user.
 
 ## DAGs
 
-Two disaster recovery DAGs are included:
+### Client1 (Production) - Port 8080
 
-### 1. disaster_recovery_dag_1
+Two production disaster recovery DAGs:
 
+**1. disaster_recovery_dag_1**
 - **Schedule**: Hourly (@hourly)
-- **Tasks**:
-  - `start` - Empty operator
-  - `process_data_batch_1` - Python task
-  - `process_data_batch_2` - Python task
-  - `end` - Empty operator
+- **Tasks**: `start` → `process_data_batch_1` → `process_data_batch_2` → `end`
+- **Task Duration**: Each task runs 5-10 seconds (random)
 - **Tags**: disaster-recovery, hourly, critical
 
-### 2. disaster_recovery_dag_2
-
+**2. disaster_recovery_dag_2**
 - **Schedule**: Hourly (@hourly)
-- **Tasks**:
-  - `start` - Empty operator
-  - `create_backup` - Python task
-  - `validate_backup` - Python task
-  - `end` - Empty operator
+- **Tasks**: `start` → `create_backup` → `validate_backup` → `end`
+- **Task Duration**: Each task runs 5-10 seconds (random)
 - **Tags**: disaster-recovery, hourly, backup
+
+### Client3 (Development) - Port 8082
+
+Two development testing DAGs:
+
+**1. dev_testing_pipeline_dag_1**
+- **Schedule**: Hourly (@hourly)
+- **Tasks**: `start` → `dev_testing_task` → `dev_integration_task` → `end`
+- **Task Duration**: Each task runs 5-10 seconds (random)
+- **Tags**: client3, development, testing
+
+**2. dev_testing_pipeline_dag_2**
+- **Schedule**: Hourly (@hourly)
+- **Tasks**: `start` → `dev_build_task` → `dev_deploy_task` → `end`
+- **Task Duration**: Each task runs 5-10 seconds (random)
+- **Tags**: client3, development, deployment
+
+## Multi-Client API Usage
+
+### Query Parameter Format
+
+All endpoints support the `?clients=client1,client3` query parameter to target specific Airflow instances:
+
+```bash
+# Query specific client
+?clients=client1
+
+# Query multiple clients
+?clients=client1,client3
+
+# No parameter = all enabled clients
+(default behavior)
+```
+
+### Client Management
+
+#### List All Configured Clients
+
+```bash
+GET /api/clients
+```
+
+```bash
+curl http://localhost:3001/api/clients
+```
 
 ## API Endpoints
 
@@ -83,48 +161,68 @@ Two disaster recovery DAGs are included:
 GET /health
 ```
 
+```bash
+curl http://localhost:3001/health
+```
+
 ### DAG Management
 
-#### Get All DAGs
+#### Get All DAGs (Multi-Client)
 
 ```bash
+# From all enabled clients
 GET /api/dags
+
+# From specific client
+GET /api/dags?clients=client1
+
+# From multiple clients
+GET /api/dags?clients=client1,client3
+```
+
+```bash
+# Example: Get DAGs from both clients
+curl "http://localhost:3001/api/dags?clients=client1,client3"
 ```
 
 #### Get Specific DAG
 
 ```bash
-GET /api/dags/:dag_id
+GET /api/dags/:dag_id?clients=client1
 ```
 
-#### Pause a DAG
+#### Pause a DAG (Multi-Client)
 
 ```bash
-POST /api/disaster-recovery/pause/:dag_id
-```
-
-Example:
-
-```bash
-curl -X POST http://localhost:3000/api/disaster-recovery/pause/disaster_recovery_dag_1
-```
-
-#### Unpause/Resume a DAG
-
-```bash
-POST /api/disaster-recovery/unpause/:dag_id
+POST /api/disaster-recovery/pause/:dag_id?clients=client1,client3
 ```
 
 Example:
 
 ```bash
-curl -X POST http://localhost:3000/api/disaster-recovery/unpause/disaster_recovery_dag_1
+# Pause on both clients
+curl -X POST "http://localhost:3001/api/disaster-recovery/pause/disaster_recovery_dag_1?clients=client1,client3"
+
+# Pause on client1 only
+curl -X POST "http://localhost:3001/api/disaster-recovery/pause/disaster_recovery_dag_1?clients=client1"
 ```
 
-#### Run a DAG
+#### Unpause/Resume a DAG (Multi-Client)
 
 ```bash
-POST /api/disaster-recovery/run/:dag_id
+POST /api/disaster-recovery/unpause/:dag_id?clients=client1,client3
+```
+
+Example:
+
+```bash
+curl -X POST "http://localhost:3001/api/disaster-recovery/unpause/disaster_recovery_dag_1?clients=client1,client3"
+```
+
+#### Run a DAG (Multi-Client)
+
+```bash
+POST /api/disaster-recovery/run/:dag_id?clients=client1,client3
 Content-Type: application/json
 
 {
@@ -135,17 +233,18 @@ Content-Type: application/json
 Example:
 
 ```bash
-curl -X POST http://localhost:3000/api/disaster-recovery/run/disaster_recovery_dag_1 \
+# Run on both clients simultaneously
+curl -X POST "http://localhost:3001/api/disaster-recovery/run/disaster_recovery_dag_1?clients=client1,client3" \
   -H "Content-Type: application/json" \
   -d '{"conf": {"environment": "production"}}'
 ```
 
-**Note**: Use this endpoint to start a new DAG run immediately with optional configuration.
+**Note**: Use this endpoint to start a new DAG run immediately with optional configuration. The API will execute the run in parallel on all specified clients.
 
-#### Trigger a DAG Run (Rerun)
+#### Trigger a DAG Run - Rerun (Multi-Client)
 
 ```bash
-POST /api/disaster-recovery/trigger/:dag_id
+POST /api/disaster-recovery/trigger/:dag_id?clients=client1
 Content-Type: application/json
 
 {
@@ -269,38 +368,50 @@ Example response:
 }
 ```
 
-## Testing the API
+## Testing the Multi-Client API
 
-### 1. Check System Status
+### 1. Check System Status (All Clients)
 
 ```bash
-curl http://localhost:3000/api/disaster-recovery/status
+curl "http://localhost:3001/api/disaster-recovery/status"
 ```
 
-### 2. Pause a DAG
+### 2. List All Configured Clients
 
 ```bash
-curl -X POST http://localhost:3000/api/disaster-recovery/pause/disaster_recovery_dag_1
+curl http://localhost:3001/api/clients
 ```
 
-### 3. Trigger a DAG Run
+### 3. Get DAGs from Both Clients
 
 ```bash
-curl -X POST http://localhost:3000/api/disaster-recovery/trigger/disaster_recovery_dag_1 \
+curl "http://localhost:3001/api/dags?clients=client1,client3"
+```
+
+### 4. Run DAG on Both Clients Simultaneously
+
+```bash
+curl -X POST "http://localhost:3001/api/disaster-recovery/run/disaster_recovery_dag_1?clients=client1,client3" \
   -H "Content-Type: application/json" \
-  -d '{}'
+  -d '{"conf": {"test": "multi-client"}}'
 ```
 
-### 4. Get DAG Runs
+### 5. Pause DAG on Specific Client
 
 ```bash
-curl http://localhost:3000/api/disaster-recovery/runs/disaster_recovery_dag_1
+curl -X POST "http://localhost:3001/api/disaster-recovery/pause/disaster_recovery_dag_1?clients=client1"
 ```
 
-### 5. Resume a DAG
+### 6. Get DAG Runs from Client1
 
 ```bash
-curl -X POST http://localhost:3000/api/disaster-recovery/unpause/disaster_recovery_dag_1
+curl "http://localhost:3001/api/disaster-recovery/runs/disaster_recovery_dag_1?clients=client1"
+```
+
+### 7. Resume DAG on Both Clients
+
+```bash
+curl -X POST "http://localhost:3001/api/disaster-recovery/unpause/disaster_recovery_dag_1?clients=client1,client3"
 ```
 
 ## Disaster Recovery Scenarios
@@ -323,40 +434,92 @@ curl -X POST http://localhost:3000/api/disaster-recovery/unpause/disaster_recove
 2. Monitor run: `GET /api/disaster-recovery/runs/:dag_id/:dag_run_id`
 3. Check task logs: `GET /api/disaster-recovery/logs/:dag_id/:dag_run_id/:task_id`
 
+## Automated Setup Scripts
+
+### start.sh
+
+One-command setup that:
+- Creates all necessary directories
+- Sets proper permissions  
+- Starts both Airflow instances (Client1 and Client3)
+- Starts the Multi-Client API server
+- Waits for all services to be healthy
+- Displays all access URLs and example commands
+
+```bash
+./start.sh
+```
+
+### stop.sh
+
+Cleanly stops all services:
+- Stops the Multi-Client API server
+- Stops Client1 (Production Airflow)
+- Stops Client3 (Development Airflow)
+
+```bash
+./stop.sh
+```
+
 ## Environment Variables
 
-- `AIRFLOW_URL`: Airflow webserver URL (default: http://localhost:8080)
-- `AIRFLOW_USERNAME`: Airflow admin username (default: airflow)
-- `AIRFLOW_PASSWORD`: Airflow admin password (default: airflow)
-- `PORT`: API server port (default: 3000)
+- `PORT`: API server port (default: 3001 for multi-client setup)
+- Multi-client configuration is stored in `config/clients.json`
 
 ## Directory Structure
 
 ```
 .
-├── docker-compose.yaml       # Docker Compose configuration
-├── Dockerfile                # Node.js API Dockerfile
-├── package.json              # Node.js dependencies
-├── .env                      # Environment variables
-├── dags/                     # Airflow DAG files
+├── start.sh                      # Automated startup script
+├── stop.sh                       # Automated shutdown script
+├── docker-compose.yaml           # Client1 (Production) - Port 8080
+├── docker-compose-client3.yaml   # Client3 (Development) - Port 8082
+├── package.json                  # Node.js dependencies
+├── config/
+│   └── clients.json              # Multi-client configuration
+├── dags/                         # Client1 DAG files
 │   ├── disaster_recovery_dag_1.py
 │   └── disaster_recovery_dag_2.py
-├── logs/                     # Airflow logs (auto-created)
-├── plugins/                  # Airflow plugins (auto-created)
+├── dags-client3/                 # Client3 DAG files
+│   ├── dev_testing_pipeline_dag_1.py
+│   └── dev_testing_pipeline_dag_2.py
+├── logs/                         # Client1 logs (auto-created)
+├── logs-client3/                 # Client3 logs (auto-created)
+├── plugins/                      # Airflow plugins (shared)
 └── src/
-    └── index.js              # Disaster Recovery API server
+    ├── index.js                  # Multi-Client API server
+    ├── services/
+    │   └── airflowService.js     # Parallel API call service
+    └── utils/
+        └── clientManager.js      # Client configuration management
 ```
 
 ## Stopping the Services
 
+### Using the stop script (Recommended)
+
 ```bash
-docker-compose down
+./stop.sh
+```
+
+### Manual Shutdown
+
+```bash
+# Stop API server
+pkill -f "PORT=3001 node"
+
+# Stop Client1
+docker compose down
+
+# Stop Client3
+docker compose -f docker-compose-client3.yaml down
 ```
 
 To remove volumes as well:
 
 ```bash
-docker-compose down -v
+docker compose down -v
+docker compose -f docker-compose-client3.yaml down -v
 ```
 
 ## Troubleshooting

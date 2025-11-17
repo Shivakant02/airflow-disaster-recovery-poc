@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Airflow
+dags/__pycache__/
+plugins/__pycache__/
+
+# Database
+postgres-db-volume/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

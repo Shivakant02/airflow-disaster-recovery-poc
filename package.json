@@ -1,0 +1,18 @@
+{
+  "name": "disaster-recovery",
+  "version": "1.0.0",
+  "description": "Disaster Recovery API for Apache Airflow 2.11.0",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "axios": "^1.7.7"
+  }
+}

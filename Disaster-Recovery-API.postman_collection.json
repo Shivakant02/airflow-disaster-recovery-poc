@@ -1,0 +1,367 @@
+{
+  "info": {
+    "name": "Disaster Recovery API - Airflow 2.11.0",
+    "description": "Complete API collection for Airflow disaster recovery operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "System Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/status",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "disaster-recovery", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DAG Management",
+      "item": [
+        {
+          "name": "Get All DAGs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/dags",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "dags"]
+            }
+          }
+        },
+        {
+          "name": "Get DAG Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/dags/disaster_recovery_dag_1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "dags", "disaster_recovery_dag_1"]
+            }
+          }
+        },
+        {
+          "name": "Pause DAG",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/pause/disaster_recovery_dag_1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "pause",
+                "disaster_recovery_dag_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unpause DAG",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/unpause/disaster_recovery_dag_1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "unpause",
+                "disaster_recovery_dag_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Run DAG",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conf\": {\n    \"environment\": \"production\",\n    \"batch_id\": \"123\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/run/disaster_recovery_dag_1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "run",
+                "disaster_recovery_dag_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Trigger DAG Run (Rerun)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conf\": {\n    \"test\": \"value\"\n  },\n  \"logical_date\": \"2025-11-17T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/trigger/disaster_recovery_dag_1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "trigger",
+                "disaster_recovery_dag_1"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DAG Run Management",
+      "item": [
+        {
+          "name": "Get DAG Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/runs/disaster_recovery_dag_1?limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "runs",
+                "disaster_recovery_dag_1"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get DAG Run Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/runs/disaster_recovery_dag_1/:dag_run_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "runs",
+                "disaster_recovery_dag_1",
+                ":dag_run_id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Clear/Rerun Failed Tasks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"only_failed\": true,\n  \"dry_run\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/clear/disaster_recovery_dag_1/:dag_run_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "clear",
+                "disaster_recovery_dag_1",
+                ":dag_run_id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Task Management",
+      "item": [
+        {
+          "name": "Get Task Instances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/tasks/disaster_recovery_dag_1/:dag_run_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "tasks",
+                "disaster_recovery_dag_1",
+                ":dag_run_id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Task Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/logs/disaster_recovery_dag_1/:dag_run_id/:task_id?try_number=1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "logs",
+                "disaster_recovery_dag_1",
+                ":dag_run_id",
+                ":task_id"
+              ],
+              "query": [
+                {
+                  "key": "try_number",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Task State",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_state\": \"success\",\n  \"dry_run\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/task-state/disaster_recovery_dag_1/:dag_run_id/:task_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [
+                "api",
+                "disaster-recovery",
+                "task-state",
+                "disaster_recovery_dag_1",
+                ":dag_run_id",
+                ":task_id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Pause All DAGs",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/pause-all",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "disaster-recovery", "pause-all"]
+            }
+          }
+        },
+        {
+          "name": "Unpause All DAGs",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/disaster-recovery/unpause-all",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "disaster-recovery", "unpause-all"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

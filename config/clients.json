@@ -1,0 +1,22 @@
+{
+  "airflow_clients": [
+    {
+      "client_id": "client1",
+      "client_name": "Production Airflow",
+      "airflow_url": "http://localhost:8080",
+      "username": "airflow",
+      "password": "airflow",
+      "enabled": true,
+      "description": "Main production instance"
+    },
+    {
+      "client_id": "client3",
+      "client_name": "Development Airflow",
+      "airflow_url": "http://localhost:8082",
+      "username": "airflow",
+      "password": "airflow",
+      "enabled": true,
+      "description": "Development environment"
+    }
+  ]
+}
